@@ -16,6 +16,7 @@ def frames_extraction(source_path: str, target_path: str, frames_frequency=25) -
         os.mkdir(target_path)
 
     cap = cv2.VideoCapture(source_path)
+    print(f'fps: {cap.get(cv2.CAP_PROP_FPS)}')
     cnt, times = 0, 0
     while True:
 
@@ -31,7 +32,7 @@ def frames_extraction(source_path: str, target_path: str, frames_frequency=25) -
 
         times += 1
 
-    print('frames extraction finished')
+    print('key frames extraction finished')
     cap.release()
 
 
@@ -39,6 +40,6 @@ if __name__ == '__main__':
     # source_path = input("source video full path (only mp4):")
     # target_path = input("frames extraction save path:")
     # frames_frequency = int(input("frames frequency"))
-    source = 'C:\\Users\\jinyang\\Desktop\\video.mp4'
+    source = os.path.join(os.path.abspath("."), 'video.mp4')
     target = os.path.join(os.path.dirname(source), 'frames_video')
     frames_extraction(source, target)
