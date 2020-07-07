@@ -1,131 +1,134 @@
+import os
 import cv2
-import multiprocessing
 import numpy as np
-from sklearn.cluster import Birch
-import matplotlib.pyplot as plt
+from typing import List
+from matplotlib import pyplot as plt
+
+threshold = float(0.9876543)
 
 
-def video2frame(video_path):
-    frames = []
-    cap = cv2.VideoCapture(video_path)
-    c = 0
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    print('fps is {}'.format(fps))
-    if not cap.isOpened():
-        print('Error opening video stream of file')
-        return
-    cnt = 0
+class FrameHist:
+    """帧直方图"""
+
+    def __init__(self, no: int, hist: List):
+        self.no = no
+        self.hist = hist
+
+
+class FrameCluster:
+    """帧聚类"""
+
+    def __init__(self, cluster: List[FrameHist], center: FrameHist):
+        self.cluster = cluster
+        self.center = center
+
+    def re_center(self):
+        """重新计算聚类中心"""
+        hist_sum = [0] * len(self.cluster[0].hist)
+        for i in range(len(self.cluster[0].hist)):
+            for j in range(len(self.cluster)):
+                hist_sum[i] += self.cluster[j].hist[i]
+        self.center.hist = [i / len(self.cluster) for i in hist_sum]
+
+
+def similarity(frame1, frame2):
+    """
+    直方图计算法，两帧之间的相似度
+
+    TODO
+    此算法可优化：平均哈希算法，感知哈希算法，直方图计算法
+    """
+    s = np.vstack((frame1, frame2)).min(axis=0)
+    similar = np.sum(s)
+    # print(similar)
+    return similar
+
+
+def handle_video_frames(source_path: str, target_path: str):
+    # 创建视频对象
+    cap = cv2.VideoCapture(source_path)
+    fps = cap.get(cv2.CAP_PROP_FPS)  # 帧率
+    frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT)  # 帧数
+    height, width = cap.get(cv2.CAP_PROP_FRAME_HEIGHT), cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # 帧高，宽
+    print(f'Frames Per Second: {fps}')
+    print(f'Number of Frames : {frame_count}')
+    print(f'Height of Video: {height}')
+    print(f'Width of Video: {width}')
+
+    times = 1
+    frames, frame_hists = list(), list()
     while True:
 
-        i, tmp = 0, list()
-        while i < 5:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            tmp.append(frame)
-            cnt += 1
+        # 读取视频帧
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-        frames.append(tmp)
+        frames.append(frame)
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # BGR -> HSV 转换颜色空间
+        # 统计颜色直方图，[h,s,v]:[0,1,2] 分为 [12,5,5]份
+        hist = cv2.calcHist([hsv], [0, 1, 2], None, [12, 5, 5], [0, 256, 0, 256, 0, 256])
+        # numpy 3维数组扁平化
+        flatten_hists = hist.flatten()
+        # 求均值
+        flatten_hists /= height * width
+        frame_hists.append(flatten_hists)
+
+        # 显示3个通道的颜色直方图
+        # plt.plot(flatten_hists[:12], label=f'H_{times}', color='blue')
+        # plt.plot(flatten_hists[12:17], label=f'S_{times}', color='green')
+        # plt.plot(flatten_hists[17:], label=f'V_{times}', color='red')
+        # plt.legend(loc='best')
+        # plt.xlim([0, 22])
+
+        times += 1
+    # plt.show()
+
+    # 释放
+
+    # 聚类,第一个自成一类
+    clusters = list([FrameCluster([FrameHist(0, frame_hists[0])], FrameHist(0, frame_hists[0]))])
+
+    for no, hist in enumerate(frame_hists[1:]):
+        """
+        将每一帧与已形成的聚类中心比较，取相似度最大值，其若小于阈值则自成一类，否则加入此类
+        """
+        max_ratio, clu_idx = 0, 0
+        for i, clu in enumerate(clusters):
+            sim_ratio = similarity(hist, clu.center.hist)
+            if sim_ratio > max_ratio:
+                max_ratio, clu_idx = sim_ratio, i
+
+        # 最大相似度 与 阈值比较
+        if max_ratio < threshold:
+            """小于阈值，自成一类"""
+            clusters.append(FrameCluster([FrameHist(no, hist)], FrameHist(no, hist)))
+        else:
+            clusters[clu_idx].cluster.append(FrameHist(no, hist))
+            # 重新计算聚类中心
+            clusters[clu_idx].re_center()
+            clusters[clu_idx].center.no = no
+
+    # 按帧序号排序
+    clusters.sort(key=lambda x: x.center.no)
+
+    if not os.path.exists(target_path):
+        os.mkdir(target_path)
+
+    # 保存
+    for clu in clusters:
+        cv2.imwrite(f'{target_path}/{clu.center.no}.jpg', frames[clu.center.no])
 
     cap.release()
-    return frames
-
-
-def calc_hist(frame):
-    h, w, _ = frame.shape
-    temp = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    hist = cv2.calcHist([temp], [0, 1, 2], None, [12, 5, 5], [0, 256, 0, 256, 0, 256])
-    hist = hist.flatten()
-    hist /= h * w
-    return hist
-
-
-def similarity(a1, a2):
-    ## compute similarity between frames.
-    # temp = np.concatenate((a1,a2),axis=1)
-    temp = np.vstack((a1, a2))
-    # print(temp)
-    # print(temp.shape)
-    s = temp.min(axis=0)
-    # print(s.shape)
-    si = np.sum(s)
-    # print(si)
-    return si
-
-
-def ekf(total_frames):
-    ## extract key frames from total frames.
-    ## First cluster.
-    ## Second ekf.
-    centers_d = {}
-    result = []
-    for i in range(len(total_frames)):
-        temp = 0.0
-        if len(centers_d) < 1:
-            centers_d[i] = [total_frames[i], i]
-        else:
-            centers = list(centers_d.keys())
-            for index, each in enumerate(centers):
-                ind = -1
-                t_si = similarity(total_frames[i], centers_d[each][0])
-                # print(t_si)
-                if t_si < 0.8:
-                    continue
-                elif t_si > temp:
-                    temp = t_si
-                    ind = index
-                else:
-                    continue
-            if temp > 0.8 and ind != -1:
-                centers_d[centers[ind]].append(i)
-                length = len(centers_d[centers[ind]]) - 1
-                c_old = centers_d[centers[ind]][0] * length
-                c_new = (c_old + total_frames[i]) / (length + 1)
-                centers_d[centers[ind]][0] = c_new
-            else:
-                centers_d[i] = [total_frames[i], i]
-
-    cks = list(centers_d.keys())
-    for index, each in enumerate(cks):
-        if len(centers_d[each]) <= 6:
-            result.extend(centers_d[each][1:])
-        else:
-            temp = []
-            accordence = {}
-            c = centers_d[each][0]
-            for jindex, jeach in enumerate(centers_d[each][1:]):
-                accordence[jindex] = jeach
-
-                tempsi = similarity(c, total_frames[jeach])
-                temp.append(tempsi)
-            oktemp = np.argsort(temp).tolist()
-            print('oktemp {}'.format(oktemp))
-            print('accordence: {}'.format(accordence))
-            for i in range(5):
-                oktemp[i] = accordence[oktemp[i]]
-
-            result.extend(oktemp[:5])
-    return centers_d, sorted(result)
 
 
 if __name__ == '__main__':
-    pool = multiprocessing.Pool(processes=10)
-    video_name = 'video_2.mp4'
-    total_frames = video2frame(video_name)
-    print("there are {} frames in video".format(len(total_frames)))
-    h, w, _ = total_frames[0].shape
-    hist = pool.map(calc_hist, total_frames)
-    print('hist.shape: {}'.format(hist[0].shape))
-    print(len(hist))
-    # print('hist[0]: {}'.format(hist[0]))
-
-    # si = similarity(hist[80], hist[90])
-    # print('similarity between two frames: {}'.format(si))
-    # print((hist[1]+hist[2]+hist[3])/3)
-    cents, results = ekf(hist)
-    print(len(cents), results)
-    to_show = cv2.cvtColor(total_frames[cents[0][-1]], cv2.COLOR_BGR2RGB)
-    print(to_show)
-    plt.imshow(to_show)
-    plt.show()
-    pool.terminate()
+    # 打开当前文件夹下的 video.mp4 视频
+    source = os.path.join(os.path.abspath('.'), 'video.mp4')
+    target = os.path.join(os.path.dirname(source), 'frames_video')
+    handle_video_frames(source, target)
+    # video_writer = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'mp4v'), 25, (464, 848))  # (1360,480)为视频大小
+    # print(os.listdir(target))
+    # for img_name in os.listdir(target):
+    #     video_writer.write(cv2.imread(f'{target}/{img_name}'))
+    # video_writer.release()
