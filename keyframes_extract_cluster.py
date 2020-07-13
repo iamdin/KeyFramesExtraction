@@ -40,7 +40,6 @@ def similarity(frame1, frame2):
     """
     s = np.vstack((frame1, frame2)).min(axis=0)
     similar = np.sum(s)
-    # print(similar)
     return similar
 
 
@@ -68,6 +67,7 @@ def handle_video_frames(source_path: str, target_path: str):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # BGR -> HSV 转换颜色空间
         # 统计颜色直方图，[h,s,v]:[0,1,2] 分为 [12,5,5]份
         hist = cv2.calcHist([hsv], [0, 1, 2], None, [12, 5, 5], [0, 256, 0, 256, 0, 256])
+        print(type(hist))
         # numpy 3维数组扁平化
         flatten_hists = hist.flatten()
         # 求均值
@@ -116,8 +116,8 @@ def handle_video_frames(source_path: str, target_path: str):
         os.mkdir(target_path)
 
     # 保存
-    for clu in clusters:
-        cv2.imwrite(f'{target_path}/{clu.center.no}.jpg', frames[clu.center.no])
+    # for clu in clusters:
+    # cv2.imwrite(f'{target_path}/{clu.center.no}.jpg', frames[clu.center.no])
 
     cap.release()
 
