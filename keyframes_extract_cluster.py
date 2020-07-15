@@ -24,9 +24,9 @@ class Time:
         self.hour, self.minute = divmod(self.minute, 60)
 
     def __str__(self):
-        return f'{str(int(self.hour)) + "-" if self.hour else ""}' \
-               f'{str(int(self.minute)) + "-" if self.minute else ""}' \
-               f'{str(int(self.second)) + "-" if self.second else ""}' \
+        return f'{str(int(self.hour)) + "h-" if self.hour else ""}' \
+               f'{str(int(self.minute)) + "m-" if self.minute else ""}' \
+               f'{str(int(self.second)) + "s-" if self.second else ""}' \
                f'{int(self.millisecond)}'
 
 
