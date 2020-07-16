@@ -34,7 +34,7 @@ class Frame:
     """帧直方图"""
 
     def __init__(self, no: int, hist: List):
-        """帧序号、时间、直方图"""
+        """帧序号、直方图"""
         self.no = no
         self.hist = hist
 
