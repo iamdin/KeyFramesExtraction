@@ -1,5 +1,6 @@
 import cv2
 import os
+from keyframes_extract_cluster import handle_video_frames, similarity
 
 
 def handle_video(video_path: str):
@@ -28,6 +29,11 @@ def handle_video(video_path: str):
 
 
 if __name__ == '__main__':
-    source = os.path.join(os.path.abspath('.'), 'video.mp4')
-    target = os.path.join(os.path.dirname(source), 'frames_video')
-    handle_video(source)
+    standard = handle_video_frames(os.path.join(os.path.abspath('.'), 'full_video.mp4'))
+    assessment = handle_video_frames(os.path.join(os.path.abspath('.'), 'assessment.mp4'))
+    max_similarity = float('-inf')
+    for i, frame1 in enumerate(standard):
+        similar = max([similarity(frame1.hist, frame2.hist) for frame2 in assessment])
+        max_similarity = max(max_similarity, similar)
+        print(f'standard frame-{i} max : {similar}')
+    print(f'max : {max_similarity}')
