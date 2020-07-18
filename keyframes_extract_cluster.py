@@ -27,7 +27,7 @@ class Time:
         return f'{str(int(self.hour)) + "h-" if self.hour else ""}' \
                f'{str(int(self.minute)) + "m-" if self.minute else ""}' \
                f'{str(int(self.second)) + "s-" if self.second else ""}' \
-               f'{int(self.millisecond)}'
+               f'{str(int(self.millisecond)) + "ms"}'
 
 
 class Frame:
@@ -178,6 +178,7 @@ def store_keyframe(video_path: str, target_path: str, frame_clusters: List[Frame
     nex, frame = cap.read()
     while nex:
         if no in nos:
+            print(cap.get(cv2.CAP_PROP_POS_MSEC))
             cv2.imwrite(f'{target_path}/{no}-{frame_count}_{Time(cap.get(cv2.CAP_PROP_POS_MSEC))}.jpg', frame)
         no += 1
         nex, frame = cap.read()
