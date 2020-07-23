@@ -54,7 +54,6 @@ def store_keyframe(video_path: str, target_path: str, times: List[int]):
     pos = 0
     # 读取视频帧
     nex, frame = cap.read()
-    frames = list()
     while nex:
         milliseconds = cap.get(cv2.CAP_PROP_POS_MSEC)
         if pos < len(times) and abs(int(milliseconds) - times[pos]) <= 2000:
