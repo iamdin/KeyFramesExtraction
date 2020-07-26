@@ -56,7 +56,7 @@ def store_keyframe(video_path: str, target_path: str, times: List[int]):
     nex, frame = cap.read()
     while nex:
         milliseconds = cap.get(cv2.CAP_PROP_POS_MSEC)
-        if pos < len(times) and abs(int(milliseconds) - times[pos]) <= 2000:
+        if pos < len(times) and abs(int(milliseconds) - times[pos]) <= 500:
             cv2.imwrite(f'{target_path}/{no}-{frame_count}_{Time(cap.get(cv2.CAP_PROP_POS_MSEC))}.jpg', frame)
             pos += 1
         no += 1

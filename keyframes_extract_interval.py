@@ -47,6 +47,6 @@ if __name__ == '__main__':
     # target_path = input("frames extraction save path:")
     # frames_frequency = int(input("frames frequency"))
     # 打开当前文件夹下的 video.mp4 视频
-    source = os.path.join(os.path.abspath('.'), 'video.mp4')
+    source = os.path.join(os.path.abspath('.'), 'standard.mp4')
     target = os.path.join(os.path.dirname(source), 'frames_video')
     frames_extraction(source, target)

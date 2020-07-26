@@ -9,9 +9,9 @@ from matplotlib import pyplot as plt
 # 多进程计算
 
 # 相似度阈值
-threshold = float(0.9876543)
+threshold = float(0.96)
 # 打开当前文件夹下的 video.mp4 视频
-source = os.path.join(os.path.abspath('.'), 'video.mp4')
+source = os.path.join(os.path.abspath('.'), 'standard.mp4')
 target = os.path.join(os.path.dirname(source), 'frames_video')
 
 
