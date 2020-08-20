@@ -62,8 +62,8 @@ while nex:
             continue
 
         # 计算轮廓的边界框，在当前帧中画出该框
-        # (x, y, w, h) = cv2.boundingRect(c)
-        # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        (x, y, w, h) = cv2.boundingRect(c)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     # 显示当前帧
     cv2.imshow("frame", frame)
