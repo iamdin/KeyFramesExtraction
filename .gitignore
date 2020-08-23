@@ -3,5 +3,4 @@
 .idea/*
 main
 main.*
-extract_result/*
-extract_result_thresh/*
+*.jpg
