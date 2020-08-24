@@ -1,6 +1,4 @@
 .vscode/*
 *.code-workspace
 .idea/*
-main
-main.*
 *.jpg
