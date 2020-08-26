@@ -4,12 +4,11 @@ import os
 
 def frames_extraction(source_path: str, target_path: str, frames_frequency=25) -> None:
     """
-    video frames extraction with fixed frame interval
-
-    :param source_path:
-    :param target_path:
-    :param frames_frequency:
-    :return:
+    固定间隔提取视频关键帧
+    :param source_path:视频源文件地址
+    :param target_path:关键帧输出地址
+    :param frames_frequency:固定帧数
+    :return:None
     """
     # output directory path
     if not os.path.exists(target_path):

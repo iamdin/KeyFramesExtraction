@@ -1,12 +1,14 @@
+"""
+@File  :main.py
+@Author:jyding
+@Date  :2020/8/10 下午2:42
+@Desc  :聚类实现视频关键帧提取
+"""
+
 import os
 import cv2
 import numpy as np
 from typing import List
-from matplotlib import pyplot as plt
-
-# TODO
-# HSV颜空间下，图片相似度对比
-# 多进程计算
 
 # 相似度阈值
 threshold = float(0.96)
@@ -71,9 +73,9 @@ class FrameCluster:
 def similarity(frame1, frame2):
     """
     直方图计算法，两帧之间的相似度
-
-    TODO
-    此算法可优化：平均哈希算法，感知哈希算法，直方图计算法
+    :param frame1: 第一帧的直方图
+    :param frame2: 第二帧的直方图
+    :return: 相似度 0 - 1
     """
     s = np.vstack((frame1, frame2)).min(axis=0)
     similar = np.sum(s)
@@ -82,8 +84,8 @@ def similarity(frame1, frame2):
 
 def handle_video_frames(video_path: str) -> List[Frame]:
     """
-    处理视频
-    :param video_path:
+    处理视频获取所有帧的HSV直方图
+    :param video_path: 视频路径
     :return: 帧对象数组
     """
     # 创建视频对象
@@ -131,7 +133,7 @@ def handle_video_frames(video_path: str) -> List[Frame]:
 def frames_cluster(frames: List[Frame]) -> List[FrameCluster]:
     """
     聚类
-    :param frames:
+    :param frames: 帧对象数组
     :return: 聚类数组
     """
     # 第一个自成一类
@@ -159,10 +161,13 @@ def frames_cluster(frames: List[Frame]) -> List[FrameCluster]:
     return ret_clusters
 
 
-def store_keyframe(video_path: str, target_path: str, frame_clusters: List[FrameCluster]):
+def store_keyframe(video_path: str, target_path: str, frame_clusters: List[FrameCluster]) -> None:
     """
     从聚类中 保存视频关键帧
-    :return:
+    :param video_path: 原视频地址
+    :param target_path: 关键帧保存地址
+    :param frame_clusters: 帧聚类数组
+    :return: None
     """
     # 创建视频对象
     cap = cv2.VideoCapture(video_path)
